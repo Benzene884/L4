@@ -1,35 +1,13 @@
 class TopController < ApplicationController
   def main
-    if session[:login_uid] # sessionのスペル修正
-      render "main"
+    if session[:login_uid].nil?
+      render 'login'
     else
-      render "login"
+      @user = User.find_by(uid: session[:login_uid])
+      @hashed_pass = @user.pass if @user  # ハッシュ値を取得
+      render 'main'
     end
-  end # end を追加して def ブロックを閉じる
-
-#  def login
-#    uid = params[:uid]
-#    pass = params[:pass]
-#    
-#    # Userモデルのauthenticateメソッドを呼び出し
-#    user = User.authenticate(uid, pass)
-
-#    if user
-#      session[:login_uid] = user.uid
-#      redirect_to top_main_path
-#    else
-#      render "error", status: 422
-#    end
-#  end
-    
-    
-#  def logout
-#    session.delete(:login_uid)
-#    redirect_to root_path
-#  end
-#end
-
-
+  end
 
   # ログイン処理
   def login
@@ -42,14 +20,38 @@ class TopController < ApplicationController
       session[:login_uid] = user.uid
       redirect_to action: :main
     else
-      # ログイン失敗時、エラーページを表示
-      render "error", status: 422
+      # ログイン失敗時、エラーメッセージを表示
+      flash.now[:alert] = 'IDまたはパスワードが間違っています。'
+      render 'login'  
     end
   end
+
   # ログアウト処理
   def logout
     # セッションからユーザーIDを削除
     session.delete(:login_uid)
     redirect_to action: :main
+  end
+  
+  # ユーザー新規登録画面を表示
+  def new
+    @user = User.new  # ユーザー登録の新しいインスタンスを作成
+    render 'new_user' # 修正: 'new_user'に変更
+  end
+  
+  # 新規ユーザーを作成
+  def create_user
+    uid = params[:user][:uid]
+    pass = params[:user][:pass]
+
+    # パスワードを暗号化して保存
+    encrypted_pass = BCrypt::Password.create(pass)
+    @user = User.new(uid: uid, pass: encrypted_pass)
+
+    if @user.save
+      redirect_to root_path, notice: "ユーザー登録が完了しました"
+    else
+      render 'new_user', status: :unprocessable_entity
+    end
   end
 end

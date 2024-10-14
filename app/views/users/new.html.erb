@@ -1,0 +1,10 @@
+<h1>新規ユーザー登録</h1>
+<%= form_with scope: :user, url: users_path, local: true do |f| %>
+  <%= f.label :uid, 'ユーザーID' %>
+  <%= f.text_field :uid %>
+
+  <%= f.label :pass, 'パスワード' %>
+  <%= f.password_field :pass %>
+
+  <%= f.submit '登録' %>
+<% end %>
